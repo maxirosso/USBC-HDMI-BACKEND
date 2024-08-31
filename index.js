@@ -1,5 +1,5 @@
 require('dotenv').config();
-const port = 5000;
+
 
 const express = require('express');
 const app = express();
@@ -14,6 +14,8 @@ const { MercadoPagoConfig, Payment } = require('mercadopago')
 
 app.use(express.json());
 app.use(cors());
+
+const port = process.env.PORT || 5000;
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
