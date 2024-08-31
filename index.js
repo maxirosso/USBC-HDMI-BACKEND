@@ -263,7 +263,7 @@ app.post('/create-checkout-session', async (req, res) => {
         }
 
         // Optionally create the order here if payment is successful
-        await fetch('http://localhost:5000/create-order', {
+        await fetch('https://usbc-hdmi-backend.onrender.com/create-order', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
