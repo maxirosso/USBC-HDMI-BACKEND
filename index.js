@@ -230,8 +230,8 @@ app.post('/create-checkout-session', async (req, res) => {
                 email: payerEmail
             },
             back_urls: {
-                success: 'http://localhost:5000/success',
-                failure: 'http://localhost:5000/cancel',
+                success: 'https://usbc-hdmi-backend.onrender.com/success',
+                failure: 'https://usbc-hdmi-backend.onrender.com/cancel',
                 pending: 'https://yourapp.com/pending'
             },
             auto_return: 'approved',
