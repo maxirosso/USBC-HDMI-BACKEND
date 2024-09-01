@@ -231,8 +231,8 @@ app.post('/create-checkout-session', async (req, res) => {
                 email: payerEmail
             },
             back_urls: {
-                success: 'https://rossousbchdmi.netlify.app//success',
-                failure: 'https://rossousbchdmi.netlify.app//cancel',
+                success: 'https://rossousbchdmi.netlify.app/success',
+                failure: 'https://rossousbchdmi.netlify.app/cancel',
                 pending: 'https://yourapp.com/pending'
             },
             auto_return: 'approved',
