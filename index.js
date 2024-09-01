@@ -11,6 +11,7 @@ const bcrypt = require('bcryptjs');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { MercadoPagoConfig, Payment } = require('mercadopago')
+const crypto = require('crypto');
 
 app.use(express.json());
 app.use(cors());
@@ -353,14 +354,29 @@ app.post('/create-order', async (req, res) => {
     }
 });
 
+const MERCADO_PAGO_SECRET = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+
 app.post('/webhook', async (req, res) => {
+    const signature = req.headers['x-mercadopago-signature'];
+    const body = JSON.stringify(req.body);
+
+    // Verify the signature
+    const hmac = crypto.createHmac('sha256', MERCADO_PAGO_SECRET);
+    const digest = hmac.update(body).digest('hex');
+
+    if (signature !== digest) {
+        console.log('Invalid signature');
+        return res.status(400).send('Invalid signature');
+    }
+
+    // Process the webhook payload
     try {
         const payment = req.body;
         
         if (payment.type === 'payment') {
             const paymentId = payment.data.id;
 
-            // You can use Mercado Pago's API to get detailed information about the payment
+            // Fetch payment info from Mercado Pago
             const paymentInfo = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
                 headers: {
                     'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
@@ -369,12 +385,11 @@ app.post('/webhook', async (req, res) => {
 
             const paymentData = await paymentInfo.json();
 
-            // Check if the payment was successful
+            // Update order status if payment is successful
             if (paymentData.status === 'approved') {
-                // Find the order by paymentId and update the status
                 await Order.findOneAndUpdate(
                     { paymentId },
-                    { status: 'paid' }, // You can add a status field to the Order model
+                    { status: 'paid' }, 
                     { new: true }
                 );
                 console.log('Order updated to paid status');
