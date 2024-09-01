@@ -43,7 +43,7 @@ const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true },
     description: String,
-    imageUrl: String,
+    imageUrls: [String],  // Updated to an array to hold multiple image URLs
 });
 
 const Product = mongoose.model('Product', productSchema);
@@ -76,11 +76,11 @@ app.get('/', (req, res) => {
 // Create a new product
 app.post('/api/products', async (req, res) => {
     try {
-        const { name, price, description, imageUrl } = req.body;
+        const { name, price, description, imageUrls } = req.body; // Expect imageUrls as an array
 
         // Validate data
-        if (!name || !price) {
-            return res.status(400).json({ error: 'Name and price are required' });
+        if (!name || !price || !imageUrls || !Array.isArray(imageUrls)) {
+            return res.status(400).json({ error: 'Name, price, and imageUrls are required' });
         }
 
         // Create and save the new product
@@ -88,7 +88,7 @@ app.post('/api/products', async (req, res) => {
             name,
             price,
             description,
-            imageUrl
+            imageUrls
         });
         
         await product.save();
@@ -149,10 +149,12 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // Endpoint to handle file uploads
-app.post("/upload", upload.single('product'), (req, res) => {
+app.post("/upload", upload.array('productImages', 6), (req, res) => {
+    const imageUrls = req.files.map(file => file.path); // Extract image URLs from Cloudinary
+
     res.json({
         success: 1,
-        image_url: req.file.path // Cloudinary URL
+        imageUrls // Return an array of image URLs
     });
 });
 
