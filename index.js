@@ -300,11 +300,14 @@ const Order = mongoose.model("Order", {
     items: [{
         title: String,
         quantity: Number,
-        size: String,
         unit_price: Number,
     }],
-    // Add other order details as needed
+    status: {
+        type: String,
+        default: 'pending', // Default status is 'pending'
+    }
 });
+
 
 // Route Definition
 app.get('/order-details/:paymentId', async (req, res) => {
@@ -344,6 +347,41 @@ app.post('/create-order', async (req, res) => {
         res.status(201).send('Order created successfully');
     } catch (error) {
         console.error('Error creating order:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/webhook', async (req, res) => {
+    try {
+        const payment = req.body;
+        
+        if (payment.type === 'payment') {
+            const paymentId = payment.data.id;
+
+            // You can use Mercado Pago's API to get detailed information about the payment
+            const paymentInfo = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
+                }
+            });
+
+            const paymentData = await paymentInfo.json();
+
+            // Check if the payment was successful
+            if (paymentData.status === 'approved') {
+                // Find the order by paymentId and update the status
+                await Order.findOneAndUpdate(
+                    { paymentId },
+                    { status: 'paid' }, // You can add a status field to the Order model
+                    { new: true }
+                );
+                console.log('Order updated to paid status');
+            }
+        }
+
+        res.sendStatus(200);
+    } catch (error) {
+        console.error('Error processing webhook:', error);
         res.status(500).send('Server Error');
     }
 });
